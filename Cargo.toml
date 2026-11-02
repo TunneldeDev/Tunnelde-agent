@@ -1,6 +1,6 @@
 [package]
 name = "tunnelde-agent"
-version = "0.24.0"
+version = "0.24.1"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Optional native MCP bridge and durable SSH agent runner for Tunnelde"
