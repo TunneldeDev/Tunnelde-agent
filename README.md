@@ -24,7 +24,13 @@ only when the user has explicitly chosen to use Node.
 
 ## Remote AI
 
-In Tunnelde AI, select Local or SSH execution, a connected SSH host, an absolute fresh deployment
+**This section describes advanced persistent supervisors.** With Tunnelde 0.25.0+ and
+assistant plugins 1.3.0+, ordinary remote execution uses the chat's machine selector and SSH
+stdio without this helper. Codex and Claude Code start their installed binaries directly;
+Pi approves its permission-extension upload; Tunnelde AI selects and approves a remote Node
+runtime. See [normal assistant setup](../docs/ai-assistants.md).
+
+In the plugin's advanced persistent-supervisor configuration, select a connected SSH host, an absolute fresh deployment
 directory, the matching native helper on this computer, and the remote Node executable's explicit
 path. The host asks before uploading this plugin and the helper; it never installs Node or changes
 system services. Files are private on POSIX (directory 0700, configuration 0600). On Windows they
