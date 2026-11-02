@@ -1,10 +1,16 @@
 # Optional native helper
 
 `tunnelde-agent` is a standalone executable for the MCP stdio bridge and recoverable remote AI
-agents. It is distributed separately from the desktop application and contains no Node runtime.
-Download the matching Windows, macOS or Linux architecture asset from the same Tunnelde release
-and verify its accompanying SHA-256 file. Linux ARM64 is available for remote agents even though
-the desktop application currently targets Linux x64.
+agents. Ordinary SSH, SFTP, terminal and local API chat use does not require it. It contains no
+Node runtime and is not included in the desktop installers or the main GitHub Release assets.
+
+For these optional integrations, open a successful **Release** workflow run under GitHub
+**Actions** and download the `tunnelde-agent-<platform>-<architecture>` artifact. Extract it and
+verify the binary against its accompanying SHA-256 file. The artifacts are retained for 30 days;
+you can also build from source using the instructions below. Choose the target machine's OS and
+architecture for remote runners. Linux ARM64 is built for remote agents even though the desktop
+application currently targets Linux x64. On macOS and Linux, restore executable permission with
+`chmod +x <binary>` after extracting the artifact.
 
 ## MCP stdio
 
@@ -44,6 +50,10 @@ cargo build --locked --manifest-path native-helpers/Cargo.toml
 cargo test --locked --manifest-path native-helpers/Cargo.toml
 node --test native-helpers/tests/*.test.mjs
 ```
+
+For an optimized executable, add `--release` to the build command. The output is
+`native-helpers/target/release/tunnelde-agent` (`tunnelde-agent.exe` on Windows); build on the
+target platform or use an appropriately configured Rust cross-compilation toolchain.
 
 Integration tests use explicitly selected test runtimes and disposable directories. No SSH server,
 paid provider, system service, clipboard, or existing user data is touched by these tests.
