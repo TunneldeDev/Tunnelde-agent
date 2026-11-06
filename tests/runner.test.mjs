@@ -234,7 +234,8 @@ test(
         await pause(70);
       }
       assert.equal(status.status, "failed");
-      assert.match(status.error, /unexpectedly/);
+      // A closed stdin can be observed before stdout or the child exit status.
+      assert.match(status.error, /unexpectedly|broken pipe/i);
     } finally {
       run("stop");
       for (let count = 0; count < 70; count++) {
