@@ -99,6 +99,7 @@ jobs:
           if [ "$PLATFORM" = macos-aarch64 ]; then expected=arm64; fi
           test "$(lipo -archs "target/$TARGET/release/tunnelde-agent")" = "$expected"
       - name: Package binary and checksum
+        shell: bash
         env:
           PLATFORM: ${{ matrix.platform }}
         run: node scripts/package.mjs "$PLATFORM"
