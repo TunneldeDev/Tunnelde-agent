@@ -31,7 +31,7 @@ if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  const platform = process.argv[2],
+  const platform = process.argv[2] || process.env.PLATFORM,
     version = versionOf(readFileSync("Cargo.toml", "utf8"));
   const name = packageName(platform, version),
     target = targets[platform];
