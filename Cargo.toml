@@ -3,6 +3,8 @@ name = "tunnelde-agent"
 version = "0.26.1"
 edition = "2021"
 license = "GPL-3.0-only"
+repository = "https://github.com/TunneldeDev/Tunnelde-agent"
+publish = false
 description = "Optional native MCP bridge and durable SSH agent runner for Tunnelde"
 
 [dependencies]
