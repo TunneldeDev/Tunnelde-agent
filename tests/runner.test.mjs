@@ -3,17 +3,25 @@ import process from "node:process";
 import { setTimeout } from "node:timers";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  writeFileSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const directory = dirname(fileURLToPath(import.meta.url));
-const helper = resolve(
-  directory,
-  "../target/debug",
-  process.platform === "win32" ? "tunnelde-agent.exe" : "tunnelde-agent",
-);
+const helper =
+  process.env.TUNNELDE_TEST_HELPER ||
+  resolve(
+    directory,
+    "../target/debug",
+    process.platform === "win32" ? "tunnelde-agent.exe" : "tunnelde-agent",
+  );
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 test(
@@ -25,12 +33,16 @@ test(
     const config = join(root, "config.json");
     writeFileSync(config, JSON.stringify({ root }));
     const run = (command, extra = [], input) => {
-      const result = spawnSync(helper, [command, "--directory", root, "--id", id, ...extra], {
-        input,
-        encoding: "utf8",
-        timeout: 5000,
-        windowsHide: true,
-      });
+      const result = spawnSync(
+        helper,
+        [command, "--directory", root, "--id", id, ...extra],
+        {
+          input,
+          encoding: "utf8",
+          timeout: 5000,
+          windowsHide: true,
+        },
+      );
       assert.equal(result.status, 0, result.stderr || result.error?.message);
       return JSON.parse(result.stdout);
     };
@@ -59,7 +71,9 @@ test(
       wait(
         (result) =>
           result.events.find(
-            (event) => event.message.type === "response" && event.message.message.id === id,
+            (event) =>
+              event.message.type === "response" &&
+              event.message.message.id === id,
           )?.message.message,
       );
     try {
@@ -78,17 +92,25 @@ test(
       assert.equal(start.runnerId, id);
       await wait((result) =>
         result.events.some(
-          (event) => event.message.type === "event" && event.message.event === "ready",
+          (event) =>
+            event.message.type === "event" && event.message.event === "ready",
         ),
       );
       send(1, { message: "works after launcher exits" });
-      assert.equal((await response(1)).result.echo.message, "works after launcher exits");
+      assert.equal(
+        (await response(1)).result.echo.message,
+        "works after launcher exits",
+      );
       send(2, { kind: "secret", key: "test" });
       assert.equal((await response(2)).result.present, true);
       // The bootstrap credential is never persisted to config, inbox, storage or process arguments.
-      assert.ok(!readFileSync(config, "utf8").includes("memory-only-test-secret"));
       assert.ok(
-        !readFileSync(join(root, id, "events.jsonl"), "utf8").includes("memory-only-test-secret"),
+        !readFileSync(config, "utf8").includes("memory-only-test-secret"),
+      );
+      assert.ok(
+        !readFileSync(join(root, id, "events.jsonl"), "utf8").includes(
+          "memory-only-test-secret",
+        ),
       );
       assert.ok(!readdirSync(join(root, id, "inbox")).length);
 
@@ -102,8 +124,11 @@ test(
       run(
         "send",
         [],
-        JSON.stringify({ type: "approval", approvalId: approval.approvalId, approved: true }) +
-          "\n",
+        JSON.stringify({
+          type: "approval",
+          approvalId: approval.approvalId,
+          approved: true,
+        }) + "\n",
       );
       assert.equal((await response(3)).result, true);
 
@@ -124,7 +149,10 @@ test(
       assert.match(read.sha256, /^[0-9a-f]{64}$/);
       send(5, {
         kind: "tool",
-        request: request("readOnly", "files.local.writeText", { path: file, content: "bad" }),
+        request: request("readOnly", "files.local.writeText", {
+          path: file,
+          content: "bad",
+        }),
       });
       assert.match((await response(5)).error.message, /ReadOnly/);
       assert.equal(readFileSync(file, "utf8"), "before");
@@ -193,12 +221,16 @@ test(
     const config = join(root, "config.json");
     writeFileSync(config, JSON.stringify({ root }));
     const run = (command, extra = [], input) => {
-      const result = spawnSync(helper, [command, "--directory", root, "--id", id, ...extra], {
-        input,
-        encoding: "utf8",
-        timeout: 5000,
-        windowsHide: true,
-      });
+      const result = spawnSync(
+        helper,
+        [command, "--directory", root, "--id", id, ...extra],
+        {
+          input,
+          encoding: "utf8",
+          timeout: 5000,
+          windowsHide: true,
+        },
+      );
       assert.equal(result.status, 0, result.stderr || result.error?.message);
       return JSON.parse(result.stdout);
     };
@@ -256,7 +288,11 @@ test("native MCP bridge rejects non-loopback and embedded credentials", () => {
     const result = spawnSync(helper, ["--mcp-stdio"], {
       encoding: "utf8",
       input: "",
-      env: { ...process.env, TUNNELDE_MCP_URL: url, TUNNELDE_MCP_TOKEN: "test" },
+      env: {
+        ...process.env,
+        TUNNELDE_MCP_URL: url,
+        TUNNELDE_MCP_TOKEN: "test",
+      },
       windowsHide: true,
     });
     assert.equal(result.status, 1);

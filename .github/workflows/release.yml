@@ -1,0 +1,131 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing immutable version tag
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Validate tag input
+        id: tag
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check reviewed ancestry and package version
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import {versionOf} from "./scripts/package.mjs"; if (`v${versionOf(readFileSync("Cargo.toml","utf8"))}` !== process.env.TAG) throw Error("Tag and manifest differ")'
+          node --test scripts/*.test.mjs
+  build:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x86_64
+            target: x86_64-pc-windows-msvc
+          - os: macos-15-intel
+            platform: macos-x86_64
+            target: x86_64-apple-darwin
+          - os: macos-15-intel
+            platform: macos-aarch64
+            target: aarch64-apple-darwin
+          - os: ubuntu-22.04
+            platform: linux-x86_64
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            platform: linux-aarch64
+            target: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        timeout-minutes: 3
+        continue-on-error: true
+        with:
+          key: ${{ matrix.target }}
+      - run: cargo test --locked
+      - run: cargo build --locked
+      - run: node --test tests/*.test.mjs scripts/*.test.mjs
+      - name: Build optimized binary
+        env:
+          TARGET: ${{ matrix.target }}
+        shell: bash
+        run: cargo build --release --locked --target "$TARGET"
+      - name: Verify macOS architecture
+        if: runner.os == 'macOS'
+        env:
+          TARGET: ${{ matrix.target }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          expected=x86_64
+          if [ "$PLATFORM" = macos-aarch64 ]; then expected=arm64; fi
+          test "$(lipo -archs "target/$TARGET/release/tunnelde-agent")" = "$expected"
+      - name: Package binary and checksum
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: node scripts/package.mjs "$PLATFORM"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 14
+  publish:
+    needs: [validate, build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: actions/github-script@v7
+        env:
+          TAG: ${{ needs.validate.outputs.tag }}
+        with:
+          script: |
+            const {publish} = await import(`${process.env.GITHUB_WORKSPACE}/scripts/publish.mjs`);
+            await publish({github,context,tag:process.env.TAG});
