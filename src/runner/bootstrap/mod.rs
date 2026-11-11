@@ -27,7 +27,7 @@ impl Mode {
         if count != 1 || !pairs.len().is_multiple_of(2) {
             return Err("Invalid initialized runner arguments".into());
         }
-        for pair in pairs.chunks_exact(2) {
+        for pair in pairs.as_chunks::<2>().0 {
             if !matches!(
                 pair[0].as_str(),
                 "--directory" | "--id" | "--bootstrap" | "--entry" | "--executable"
