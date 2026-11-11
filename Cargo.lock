@@ -1306,12 +1306,14 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 name = "tunnelde-agent"
 version = "0.27.0"
 dependencies = [
+ "libc",
  "reqwest",
  "serde",
  "serde_json",
  "sha2",
  "tokio",
  "uuid",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

@@ -11,7 +11,7 @@
   "helper": "tunnelde-agent",
   "helperVersion": "0.27.0",
   "runnerProtocols": [1],
-  "features": ["runner.control.v1", "runner.initialize-config.v1"]
+  "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1"]
 }
 ```
 
@@ -20,6 +20,8 @@
 协议，仍使用配置文件路径；它不表示支持 stdin 配置、残留核查或清理。
 `runner.initialize-config.v1` 独立声明支持[初始化配置](runner-initialization.md)。
 内部 `serve` 不是宿主调用入口。
+
+`runner.admission-fence.v1` 独立声明支持[持久任务启动登记](runner-admission.md)。
 
 调用方必须将 stdout/stderr 合计限制为 4096 字节，并为查询设置超时。
 确认辅助程序身份和信封版本后才能解释能力。版本 1 必须包含上述五个字段及其类型。

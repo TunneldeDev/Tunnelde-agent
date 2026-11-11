@@ -9,6 +9,7 @@ use tokio::io::{AsyncBufRead, AsyncReadExt, BufReader};
 pub(super) enum Mode {
     File(String),
     Initialize,
+    Fenced(String),
 }
 
 impl Mode {
@@ -30,7 +31,7 @@ impl Mode {
         for pair in pairs.as_chunks::<2>().0 {
             if !matches!(
                 pair[0].as_str(),
-                "--directory" | "--id" | "--bootstrap" | "--entry" | "--executable"
+                "--directory" | "--id" | "--bootstrap" | "--entry" | "--executable" | "--admission"
             ) || pair[1].is_empty()
                 || pair[1].contains('\0')
                 || !seen.insert(pair[0].as_str())
@@ -38,16 +39,23 @@ impl Mode {
                 return Err("Invalid initialized runner arguments".into());
             }
         }
-        if super::option(args, "--bootstrap")? != "initialize-v1" {
-            return Err("Unsupported runner bootstrap".into());
+        match super::option(args, "--bootstrap")?.as_str() {
+            "initialize-v1" if !seen.contains("--admission") => Ok(Self::Initialize),
+            "initialize-fenced-v1" => Ok(Self::Fenced(super::admission::token(args)?)),
+            _ => Err("Unsupported runner bootstrap".into()),
         }
-        Ok(Self::Initialize)
     }
 
     pub(super) fn arguments(&self) -> Vec<String> {
         match self {
             Self::File(path) => vec!["--config".into(), path.clone()],
             Self::Initialize => vec!["--bootstrap".into(), "initialize-v1".into()],
+            Self::Fenced(token) => vec![
+                "--bootstrap".into(),
+                "initialize-fenced-v1".into(),
+                "--admission".into(),
+                token.clone(),
+            ],
         }
     }
 
@@ -60,7 +68,7 @@ impl Mode {
                 let _: Value = serde_json::from_str(&text)?;
                 Ok(text)
             }
-            Self::Initialize => {
+            Self::Initialize | Self::Fenced(_) => {
                 let mut bytes = Vec::new();
                 // Wait for EOF before mutation: a valid prefix followed by extra
                 // input must not launch a child. Both memory and waiting are bounded.
@@ -91,7 +99,7 @@ pub(super) async fn load(args: &[String]) -> Result<Bootstrap> {
     let mode = Mode::select(args)?;
     let file = match &mode {
         Mode::File(path) => Some(serde_json::from_slice::<Value>(&std::fs::read(path)?)?),
-        Mode::Initialize => None,
+        Mode::Initialize | Mode::Fenced(_) => None,
     };
     let text = mode.read(&mut BufReader::new(tokio::io::stdin())).await?;
     match (mode, file) {
@@ -105,7 +113,7 @@ pub(super) async fn load(args: &[String]) -> Result<Bootstrap> {
                 child_arguments: vec!["--config".into(), path],
             })
         }
-        (Mode::Initialize, _) => {
+        (Mode::Initialize | Mode::Fenced(_), _) => {
             let initial = Initialized::parse(text.as_bytes())?;
             let secrets = serde_json::to_value(initial.secrets)?;
             Ok(Bootstrap {

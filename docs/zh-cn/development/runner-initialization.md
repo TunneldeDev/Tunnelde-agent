@@ -1,5 +1,7 @@
 # 运行器初始化配置
 
+需要取消迟到的启动命令时，应额外协商[持久启动登记协议](runner-admission.md)。
+
 选择此传输方式前，通过[能力查询](capabilities.md)确认
 `runner.initialize-config.v1`。它是原有 `--config` 契约之外的明确选项，
 不依赖版本号推测，也不会自动回退。

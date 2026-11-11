@@ -26,6 +26,11 @@ pub(super) async fn start(args: &[String], directory: &Path, id: &str, root: &Pa
     let entry = option(args, "--entry")?;
     // Validate the complete initialized packet before creating even a task directory.
     let initial = mode.read(&mut BufReader::new(tokio::io::stdin())).await?;
+    let _admission = if let Mode::Fenced(token) = &mode {
+        Some(super::admission::launch(directory, id, token).await?)
+    } else {
+        None
+    };
     // Preserve legacy callers that let the helper create the parent directory.
     // Initialized launches require the deployment directory to exist already.
     if matches!(&mode, Mode::File(_)) {
