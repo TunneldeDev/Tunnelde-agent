@@ -56,3 +56,34 @@ async fn invalid_lock_content_does_not_get_truncated_or_replaced() {
     assert!(Lock::acquire(&fixture.0, true).await.is_err());
     assert_eq!(std::fs::read(&path).unwrap(), b"retain");
 }
+
+#[tokio::test]
+async fn artifact_guard_retains_existing_journal_identity_without_creating_or_appending() {
+    let fixture = Fixture::new();
+    let token = uuid::Uuid::new_v4().to_string();
+    assert!(Observation::open(&fixture.0, "task", &token).await.is_err());
+    assert_eq!(std::fs::read_dir(&fixture.0).unwrap().count(), 0);
+    let lock = Lock::acquire(&fixture.0, true).await.unwrap();
+    let mut journal = Journal::open(&lock, "task", &token, true).unwrap();
+    journal.append("task", &token, State::Reserved).unwrap();
+    drop(journal);
+    drop(lock);
+    let path = fixture.0.join(".admission-v1/task.jsonl");
+    let bytes = std::fs::read(&path).unwrap();
+    let guard = Observation::open(&fixture.0, "task", &token).await.unwrap();
+    assert_eq!(guard.state(), "reserved");
+    guard.validate("task").unwrap();
+    let replaced = std::fs::rename(&path, fixture.0.join("retained.jsonl"));
+    #[cfg(windows)]
+    assert!(
+        replaced.is_err(),
+        "retained Windows handle denies deletion/rename"
+    );
+    #[cfg(unix)]
+    {
+        replaced.unwrap();
+        super::super::write_private(&path, &bytes).unwrap();
+        assert!(guard.validate("task").is_err());
+    }
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+}

@@ -1,5 +1,7 @@
 mod admission;
+mod artifacts;
 mod bootstrap;
+mod filesystem;
 mod launch;
 
 use std::collections::{HashMap, VecDeque};
@@ -143,6 +145,7 @@ pub async fn run(args: &[String]) -> Result<()> {
     }
     let root = directory.join(&id);
     match args[0].as_str() {
+        "inspect-artifacts" => artifacts::inspect(args, &directory, &id, &root).await,
         "reserve-fenced" | "stop-fenced" | "status-fenced" => {
             admission::control(args, &directory, &id, &root).await
         }

@@ -26,6 +26,7 @@ pub(crate) fn write(arguments: &[String]) -> crate::Result<()> {
             "runner.control.v1",
             "runner.initialize-config.v1",
             "runner.admission-fence.v1",
+            "runner.artifact-observation.v1",
         ],
     };
     let mut bytes = serde_json::to_vec(&envelope)?;

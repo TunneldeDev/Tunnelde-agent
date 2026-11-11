@@ -17,6 +17,11 @@ impl Fixture {
     }
     fn command(&self) -> Command {
         let mut command = Command::new(env!("CARGO_BIN_EXE_tunnelde-agent"));
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            command.creation_flags(0x08000000);
+        }
         command
             .current_dir(&self.0)
             .env("TUNNELDE_MCP_URL", "invalid:must-not-be-read")
@@ -71,7 +76,7 @@ fn discovery_needs_no_task_or_runtime_and_never_waits_for_stdin() {
             "helper": "tunnelde-agent",
             "helperVersion": env!("CARGO_PKG_VERSION"),
             "runnerProtocols": [1],
-            "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1"]
+            "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1", "runner.artifact-observation.v1"]
         })
     );
     fixture.assert_untouched();

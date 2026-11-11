@@ -72,7 +72,7 @@ pub(super) fn validate_file(file: &File, path: &Path) -> Result<()> {
     #[cfg(windows)]
     {
         super::windows::validate(file)?;
-        super::windows::same(file, &options(false).open(path)?)?;
+        super::windows::same(file, &options(false).write(false).open(path)?)?;
     }
     Ok(())
 }

@@ -14,7 +14,26 @@ pub(super) struct Journal {
 }
 
 impl Journal {
+    pub fn validate(&self, lock: &Lock, id: &str) -> Result<()> {
+        lock.validate()?;
+        locking::validate_file(&self.file, &lock.path.join(format!("{id}.jsonl")))
+    }
+
     pub fn open(lock: &Lock, id: &str, token: &str, create: bool) -> Result<Self> {
+        Self::open_inner(lock, id, token, create, false)
+    }
+
+    pub fn observe(lock: &Lock, id: &str, token: &str) -> Result<Self> {
+        Self::open_inner(lock, id, token, false, true)
+    }
+
+    fn open_inner(
+        lock: &Lock,
+        id: &str,
+        token: &str,
+        create: bool,
+        read_only: bool,
+    ) -> Result<Self> {
         lock.validate()?;
         let path = lock.path.join(format!("{id}.jsonl"));
         let exists = path.try_exists()?;
@@ -27,7 +46,11 @@ impl Journal {
                 return Err("Runner admission capacity reached".into());
             }
         }
-        let mut file = locking::options(create).open(&path)?;
+        let mut options = locking::options(create);
+        if read_only {
+            options.write(false);
+        }
+        let mut file = options.open(&path)?;
         let observed = locking::metadata(&path, false)?;
         locking::validate_file(&file, &path)?;
         if observed.len() > MAX_JOURNAL {
