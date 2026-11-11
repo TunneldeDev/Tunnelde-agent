@@ -22,7 +22,7 @@ pub(crate) fn write(arguments: &[String]) -> crate::Result<()> {
         helper: "tunnelde-agent",
         helper_version: env!("CARGO_PKG_VERSION"),
         runner_protocols: &[1],
-        features: &["runner.control.v1"],
+        features: &["runner.control.v1", "runner.initialize-config.v1"],
     };
     let mut bytes = serde_json::to_vec(&envelope)?;
     bytes.push(b'\n');

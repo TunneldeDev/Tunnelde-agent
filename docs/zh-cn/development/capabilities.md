@@ -11,13 +11,14 @@
   "helper": "tunnelde-agent",
   "helperVersion": "0.26.1",
   "runnerProtocols": [1],
-  "features": ["runner.control.v1"]
+  "features": ["runner.control.v1", "runner.initialize-config.v1"]
 }
 ```
 
 `helperVersion` 仅供展示；`schemaVersion` 是查询信封版本，`runnerProtocols`
 列出支持的任务协议。`runner.control.v1` 表示既有 start/send/poll/stop/status
 协议，仍使用配置文件路径；它不表示支持 stdin 配置、残留核查或清理。
+`runner.initialize-config.v1` 独立声明支持[初始化配置](runner-initialization.md)。
 内部 `serve` 不是宿主调用入口。
 
 调用方必须将 stdout/stderr 合计限制为 4096 字节，并为查询设置超时。
