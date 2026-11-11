@@ -25,7 +25,7 @@ async fn run() -> Result<()> {
         }
         Some(
             "start" | "serve" | "send" | "poll" | "stop" | "status" | "reserve-fenced"
-            | "stop-fenced" | "status-fenced",
+            | "stop-fenced" | "status-fenced" | "inspect-artifacts",
         ) => runner::run(&arguments).await,
         _ => Err(
             "Expected --capabilities, --mcp-stdio, --version, start, send, poll, stop or status"

@@ -2,6 +2,8 @@
 mod contracts;
 mod journal;
 mod locking;
+mod observation;
+pub(super) use observation::Observation;
 #[cfg(test)]
 mod tests;
 #[cfg(windows)]

@@ -23,6 +23,10 @@
 
 `runner.admission-fence.v1` 独立声明支持[持久任务启动登记](runner-admission.md)。
 
+新增源码还声明 `runner.artifact-observation.v1`，提供有界的
+[任务残留元数据观察](runner-artifacts.md)。已发布的 0.27.0 不包含启动登记保护
+和残留观察，必须查询能力，不能按版本推断。
+
 调用方必须将 stdout/stderr 合计限制为 4096 字节，并为查询设置超时。
 确认辅助程序身份和信封版本后才能解释能力。版本 1 必须包含上述五个字段及其类型。
 字符串使用非空白可打印 ASCII：辅助程序版本为 1–64 字节；能力名为 1–64 字节，

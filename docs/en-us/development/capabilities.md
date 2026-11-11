@@ -25,6 +25,10 @@ or artifact cleanup. `runner.initialize-config.v1` separately declares
 
 `runner.admission-fence.v1` separately declares [durable task admission](runner-admission.md).
 
+New source also declares `runner.artifact-observation.v1` for bounded
+[task artifact metadata observation](runner-artifacts.md); published 0.27.0
+predates admission fencing and artifact observation. Require discovery, not the version.
+
 Consumers must bound combined stdout/stderr to 4096 bytes and time out discovery.
 Require the helper identity and supported schema before interpreting features.
 Version 1 requires all five fields with the types above. Strings are printable, non-whitespace
