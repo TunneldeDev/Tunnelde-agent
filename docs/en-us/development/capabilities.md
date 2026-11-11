@@ -10,7 +10,7 @@ task parsing; diagnostic output does not echo those arguments.
 {
   "schemaVersion": 1,
   "helper": "tunnelde-agent",
-  "helperVersion": "0.26.1",
+  "helperVersion": "0.27.0",
   "runnerProtocols": [1],
   "features": ["runner.control.v1", "runner.initialize-config.v1"]
 }

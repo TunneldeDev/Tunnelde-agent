@@ -46,6 +46,12 @@ path. The host asks before uploading this plugin and the helper; it never instal
 system services. Files are private on POSIX (directory 0700, configuration 0600). On Windows they
 inherit the selected account directory's ACL; choose a private user directory.
 
+Helper 0.27.0 adds explicitly negotiated [initialized configuration](docs/en-us/development/runner-initialization.md).
+Opted-in plugins receive configuration and secrets through stdin and initialize instead of a
+configuration file. Use a host that advertises `runners.startInitialized`; older hosts and
+existing tasks retain the legacy contract. Helper storage starts empty in the new mode;
+plugins can still explicitly persist their own state.
+
 The helper launches a detached supervisor without installing a service. Secrets arrive over SSH
 stdin and remain in memory. Conversation state, bounded task output, sequenced event journals
 and pending approval descriptions stay in the deployment directory, so it should be treated as
