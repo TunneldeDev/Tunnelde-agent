@@ -1,3 +1,4 @@
+mod protocol;
 mod runner;
 
 use serde_json::{json, Value};
@@ -16,6 +17,7 @@ async fn main() {
 async fn run() -> Result<()> {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     match arguments.first().map(String::as_str) {
+        Some("--capabilities") => protocol::capabilities::write(&arguments),
         Some("--mcp-stdio") => mcp_bridge().await,
         Some("--version") => {
             println!("{}", env!("CARGO_PKG_VERSION"));
@@ -24,7 +26,10 @@ async fn run() -> Result<()> {
         Some("start" | "serve" | "send" | "poll" | "stop" | "status") => {
             runner::run(&arguments).await
         }
-        _ => Err("Expected --mcp-stdio, --version, start, send, poll, stop or status".into()),
+        _ => Err(
+            "Expected --capabilities, --mcp-stdio, --version, start, send, poll, stop or status"
+                .into(),
+        ),
     }
 }
 

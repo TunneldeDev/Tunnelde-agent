@@ -45,6 +45,8 @@ Claude Code 和 Pi 的 ReadOnly 执行会被拒绝；Codex 使用自身只读沙
 
 ## 构建与测试
 
+只读协议协商见[辅助程序能力查询](docs/capabilities.zh-cn.md)。
+
 ```sh
 cargo fmt -- --check
 cargo clippy --all-targets --locked -- -D warnings

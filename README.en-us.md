@@ -59,6 +59,8 @@ ReadOnly uses its own read sandbox. Use an API profile for host-enforced read-on
 
 ## Build and test
 
+For read-only protocol negotiation, see [helper capability discovery](docs/capabilities.en-us.md).
+
 ```sh
 cargo fmt -- --check
 cargo clippy --all-targets --locked -- -D warnings
