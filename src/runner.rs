@@ -1,3 +1,6 @@
+mod bootstrap;
+mod launch;
+
 use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -115,15 +118,6 @@ fn id_valid(value: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || b"-_".contains(&byte))
 }
-fn private_directory(path: &Path) -> Result<()> {
-    std::fs::create_dir_all(path)?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))?;
-    }
-    Ok(())
-}
 fn write_private(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut options = std::fs::OpenOptions::new();
     options.write(true).create_new(true);
@@ -148,62 +142,7 @@ pub async fn run(args: &[String]) -> Result<()> {
     }
     let root = directory.join(&id);
     match args[0].as_str() {
-        "start" => {
-            if root.exists() {
-                return Err("Runner ID already exists".into());
-            }
-            private_directory(&root)?;
-            private_directory(&root.join("inbox"))?;
-            let config = option(args, "--config")?;
-            let executable = option(args, "--executable")?;
-            let entry = option(args, "--entry")?;
-            let mut input = BufReader::new(tokio::io::stdin());
-            let initial = bounded_line(&mut input, 256 * 1024)
-                .await?
-                .unwrap_or_else(|| "{}".into());
-            let _: Value = serde_json::from_str(&initial)?;
-            let null = std::fs::OpenOptions::new()
-                .read(true)
-                .write(true)
-                .open(if cfg!(windows) { "NUL" } else { "/dev/null" })?;
-            let mut child = std::process::Command::new(std::env::current_exe()?);
-            #[cfg(windows)]
-            {
-                use std::os::windows::process::CommandExt;
-                child.creation_flags(0x08000008);
-            }
-            #[cfg(unix)]
-            {
-                use std::os::unix::process::CommandExt;
-                child.process_group(0);
-            }
-            let mut child = child
-                .args([
-                    "serve",
-                    "--directory",
-                    &directory.to_string_lossy(),
-                    "--id",
-                    &id,
-                    "--config",
-                    &config,
-                    "--executable",
-                    &executable,
-                    "--entry",
-                    &entry,
-                ])
-                .stdin(std::process::Stdio::piped())
-                .stdout(null.try_clone()?)
-                .stderr(null)
-                .spawn()?;
-            write_private(&root.join("pid"), child.id().to_string().as_bytes())?;
-            use std::io::Write;
-            if let Some(mut stdin) = child.stdin.take() {
-                stdin.write_all(initial.as_bytes())?;
-                stdin.write_all(b"\n")?;
-            }
-            println!("{}", json!({"runnerId":id,"status":"starting"}));
-            Ok(())
-        }
+        "start" => launch::start(args, &directory, &id, &root).await,
         "serve" => {
             let result = serve(args, &root).await;
             if let Err(error) = &result {
@@ -336,7 +275,7 @@ impl Process {
 }
 struct Host {
     root: PathBuf,
-    config: Value,
+    config: Option<Value>,
     secrets: Value,
     processes: HashMap<String, Process>,
     output: mpsc::Sender<(String, &'static str, Vec<u8>)>,
@@ -380,7 +319,12 @@ impl Host {
                 let mut stored: Value = std::fs::read(&path)
                     .ok()
                     .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-                    .unwrap_or_else(|| json!({"config":self.config}));
+                    .unwrap_or_else(|| {
+                        self.config
+                            .as_ref()
+                            .map(|config| json!({"config":config}))
+                            .unwrap_or_else(|| json!({}))
+                    });
                 if method == "storage.get" {
                     return Ok(stored.get(key).cloned().unwrap_or(Value::Null));
                 }
@@ -777,21 +721,12 @@ async fn terminate(child: &mut tokio::process::Child) {
 }
 
 async fn serve(args: &[String], root: &Path) -> Result<()> {
-    let config: Value = serde_json::from_slice(&std::fs::read(option(args, "--config")?)?)?;
-    let mut bootstrap = BufReader::new(tokio::io::stdin());
-    let initial: Value = serde_json::from_str(
-        &bounded_line(&mut bootstrap, 256 * 1024)
-            .await?
-            .unwrap_or_else(|| "{}".into()),
-    )?;
+    let bootstrap = bootstrap::load(args).await?;
     let (output, mut task_output) = mpsc::channel(64);
     let host = Arc::new(Mutex::new(Host {
         root: root.to_owned(),
-        config: config
-            .get("config")
-            .cloned()
-            .unwrap_or_else(|| config.clone()),
-        secrets: initial.get("secrets").cloned().unwrap_or_else(|| json!({})),
+        config: bootstrap.configuration_seed,
+        secrets: bootstrap.secrets,
         processes: HashMap::new(),
         output,
     }));
@@ -805,11 +740,8 @@ async fn serve(args: &[String], root: &Path) -> Result<()> {
     #[cfg(unix)]
     command.process_group(0);
     let mut child = command
-        .args([
-            option(args, "--entry")?,
-            "--config".into(),
-            option(args, "--config")?,
-        ])
+        .arg(option(args, "--entry")?)
+        .args(bootstrap.child_arguments)
         .env_remove("NODE_OPTIONS")
         .env_remove("NODE_REPL_EXTERNAL_MODULE")
         .stdin(std::process::Stdio::piped())
@@ -832,7 +764,8 @@ async fn serve(args: &[String], root: &Path) -> Result<()> {
             }
         }
     });
-    let initialize = json!({"jsonrpc":"2.0","id":0,"method":"initialize","params":{"remote":true,"secrets":initial.get("secrets").cloned().unwrap_or_else(||json!({}))}});
+    let initialize =
+        json!({"jsonrpc":"2.0","id":0,"method":"initialize","params":bootstrap.initialize});
     bounded_write(
         &mut *stdin.lock().await,
         format!("{initialize}\n").as_bytes(),
