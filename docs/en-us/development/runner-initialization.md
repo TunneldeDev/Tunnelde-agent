@@ -1,5 +1,8 @@
 # Initialized runner configuration
 
+For task-bound cancellation of delayed launches, negotiate the separate
+[durable admission protocol](runner-admission.md).
+
 Discover `runner.initialize-config.v1` with [capability discovery](capabilities.md)
 before selecting this transport. It is an explicit alternative to the existing
 `--config` contract, not a version-number heuristic or automatic fallback.

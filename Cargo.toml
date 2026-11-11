@@ -15,6 +15,12 @@ uuid = { version = "1", features = ["v4"] }
 sha2 = "0.10"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "stream"] }
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+
 [profile.release]
 codegen-units = 1
 lto = true

@@ -23,9 +23,10 @@ async fn run() -> Result<()> {
             println!("{}", env!("CARGO_PKG_VERSION"));
             Ok(())
         }
-        Some("start" | "serve" | "send" | "poll" | "stop" | "status") => {
-            runner::run(&arguments).await
-        }
+        Some(
+            "start" | "serve" | "send" | "poll" | "stop" | "status" | "reserve-fenced"
+            | "stop-fenced" | "status-fenced",
+        ) => runner::run(&arguments).await,
         _ => Err(
             "Expected --capabilities, --mcp-stdio, --version, start, send, poll, stop or status"
                 .into(),

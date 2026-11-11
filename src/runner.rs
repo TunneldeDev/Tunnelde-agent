@@ -1,3 +1,4 @@
+mod admission;
 mod bootstrap;
 mod launch;
 
@@ -142,6 +143,9 @@ pub async fn run(args: &[String]) -> Result<()> {
     }
     let root = directory.join(&id);
     match args[0].as_str() {
+        "reserve-fenced" | "stop-fenced" | "status-fenced" => {
+            admission::control(args, &directory, &id, &root).await
+        }
         "start" => launch::start(args, &directory, &id, &root).await,
         "serve" => {
             let result = serve(args, &root).await;
