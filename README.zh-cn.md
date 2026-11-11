@@ -1,5 +1,7 @@
 # Tunnelde Agent
 
+[Documentation / 文档](docs/README.md)
+
 [English](README.en-us.md)
 
 [Tunnelde](https://github.com/TunneldeDev/Tunnelde) 的可选原生 MCP stdio 桥接程序和持久远端监督进程。
@@ -29,7 +31,7 @@
 ## 持久远端运行
 
 常规远端运行使用对话中的机器选择器及 SSH stdio，无需此程序。
-详见[常规助手设置](https://github.com/TunneldeDev/Tunnelde/blob/dev/docs/ai-assistants.zh-cn.md)。
+详见[常规助手设置](https://github.com/TunneldeDev/Tunnelde/blob/dev/docs/zh-cn/guide/ai-assistants.md)。
 高级持久监督进程需要用户选择 SSH 主机、全新的绝对部署目录、本机上的对应辅助程序，以及明确的远端运行环境路径。
 宿主在上传插件与辅助程序前请求确认，不安装 Node，不修改系统服务。
 POSIX 目录权限为 0700，配置为 0600；Windows 继承账户目录 ACL，应选择私有用户目录。
@@ -45,7 +47,7 @@ Claude Code 和 Pi 的 ReadOnly 执行会被拒绝；Codex 使用自身只读沙
 
 ## 构建与测试
 
-只读协议协商见[辅助程序能力查询](docs/capabilities.zh-cn.md)。
+只读协议协商见[辅助程序能力查询](docs/zh-cn/development/capabilities.md)。
 
 ```sh
 cargo fmt -- --check
