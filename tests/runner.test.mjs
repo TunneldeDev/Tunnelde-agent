@@ -29,13 +29,14 @@ test(
   { timeout: 30000 },
   async () => {
     const root = mkdtempSync(join(tmpdir(), "tunnelde-runner-test-"));
+    const runners = join(root, "nested", "runners");
     const id = "test-runner";
     const config = join(root, "config.json");
     writeFileSync(config, JSON.stringify({ root }));
     const run = (command, extra = [], input) => {
       const result = spawnSync(
         helper,
-        [command, "--directory", root, "--id", id, ...extra],
+        [command, "--directory", runners, "--id", id, ...extra],
         {
           input,
           encoding: "utf8",
@@ -108,11 +109,11 @@ test(
         !readFileSync(config, "utf8").includes("memory-only-test-secret"),
       );
       assert.ok(
-        !readFileSync(join(root, id, "events.jsonl"), "utf8").includes(
+        !readFileSync(join(runners, id, "events.jsonl"), "utf8").includes(
           "memory-only-test-secret",
         ),
       );
-      assert.ok(!readdirSync(join(root, id, "inbox")).length);
+      assert.ok(!readdirSync(join(runners, id, "inbox")).length);
 
       send(3, { kind: "confirm" });
       const approval = await wait((result) => result.pendingApprovals[0]);
