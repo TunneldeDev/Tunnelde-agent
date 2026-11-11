@@ -12,7 +12,7 @@ task parsing; diagnostic output does not echo those arguments.
   "helper": "tunnelde-agent",
   "helperVersion": "0.26.1",
   "runnerProtocols": [1],
-  "features": ["runner.control.v1"]
+  "features": ["runner.control.v1", "runner.initialize-config.v1"]
 }
 ```
 
@@ -20,7 +20,8 @@ task parsing; diagnostic output does not echo those arguments.
 `runnerProtocols` lists supported task protocols. `runner.control.v1` identifies
 the existing start/send/poll/stop/status protocol, including the existing config
 pathname contract. It does not claim stdin configuration, artifact reconciliation
-or artifact cleanup. Internal `serve` is not a host entrypoint.
+or artifact cleanup. `runner.initialize-config.v1` separately declares
+[initialized configuration](runner-initialization.md). Internal `serve` is not a host entrypoint.
 
 Consumers must bound combined stdout/stderr to 4096 bytes and time out discovery.
 Require the helper identity and supported schema before interpreting features.
