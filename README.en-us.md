@@ -1,5 +1,7 @@
 # Tunnelde Agent
 
+[Documentation / 文档](docs/README.md)
+
 [简体中文](README.zh-cn.md)
 
 Optional native MCP stdio bridge and persistent remote supervisor for
@@ -36,7 +38,7 @@ only when the user has explicitly chosen to use Node.
 assistant plugins 1.3.0+, ordinary remote execution uses the chat's machine selector and SSH
 stdio without this helper. Codex and Claude Code start their installed binaries directly;
 Pi approves its permission-extension upload; Tunnelde AI selects and approves a remote Node
-runtime. See [normal assistant setup](https://github.com/TunneldeDev/Tunnelde/blob/dev/docs/ai-assistants.en-us.md).
+runtime. See [normal assistant setup](https://github.com/TunneldeDev/Tunnelde/blob/dev/docs/en-us/guide/ai-assistants.md).
 
 In the plugin's advanced persistent-supervisor configuration, select a connected SSH host, an absolute fresh deployment
 directory, the matching native helper on this computer, and the remote Node executable's explicit
@@ -59,7 +61,7 @@ ReadOnly uses its own read sandbox. Use an API profile for host-enforced read-on
 
 ## Build and test
 
-For read-only protocol negotiation, see [helper capability discovery](docs/capabilities.en-us.md).
+For read-only protocol negotiation, see [helper capability discovery](docs/en-us/development/capabilities.md).
 
 ```sh
 cargo fmt -- --check
