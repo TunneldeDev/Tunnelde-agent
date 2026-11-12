@@ -141,7 +141,9 @@ pub(super) fn validate_storage(path: &Path) -> io::Result<()> {
     #[cfg(target_os = "macos")]
     {
         let name = unsafe { std::ffi::CStr::from_ptr(stat.f_fstypename.as_ptr()) };
-        if stat.f_flags & libc::MNT_LOCAL == 0 || !matches!(name.to_bytes(), b"apfs" | b"hfs") {
+        if stat.f_flags & libc::MNT_LOCAL as u32 == 0
+            || !matches!(name.to_bytes(), b"apfs" | b"hfs")
+        {
             return Err(invalid());
         }
     }
