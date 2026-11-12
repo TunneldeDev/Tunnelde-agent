@@ -129,7 +129,7 @@ pub(super) fn valid_uuid(value: &str) -> bool {
     uuid::Uuid::parse_str(value)
         .is_ok_and(|id| !id.is_nil() && id.hyphenated().to_string() == value)
 }
-fn valid_digest(value: &str) -> bool {
+pub(super) fn valid_digest(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
@@ -163,7 +163,7 @@ impl Intent {
     pub fn digest(&self) -> Result<String> {
         json_digest(b"tunnelde.files.save.intent.v1\0", self)
     }
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         let total: usize = self.target.iter().map(String::len).sum();
         if self.schema_version != 1
             || !valid_digest(&self.binding_sha256)

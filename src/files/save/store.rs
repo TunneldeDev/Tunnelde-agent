@@ -184,6 +184,14 @@ impl Store {
     pub fn get(&self, control: &Control) -> Result<Option<Record>> {
         self.validate(control)?;
         let value = read(&self.connection, &control.operation_id)?;
+        let binding = self.authority.binding()?;
+        if value
+            .as_ref()
+            .and_then(|r| r.intent.as_ref())
+            .is_some_and(|i| i.binding_sha256 != binding)
+        {
+            return Err("files.save.corrupt".into());
+        }
         if value.as_ref().is_some_and(|r| !r.matches(control)) {
             return Err("files.save.identityMismatch".into());
         }
@@ -339,13 +347,30 @@ fn decode(json: &str) -> Result<Record> {
         || record.revision > i64::MAX as u64
         || !super::contracts::valid_uuid(&record.operation_id)
         || !super::contracts::valid_uuid(&record.generation)
+        || !super::contracts::valid_digest(&record.intent_sha256)
+        || !super::contracts::valid_digest(&record.token_digest)
     {
         return Err("files.save.corrupt".into());
     }
-    if record
-        .intent
-        .as_ref()
-        .is_some_and(|i| i.digest().ok().as_ref() != Some(&record.intent_sha256))
+    if record.intent.as_ref().is_some_and(|i| {
+        i.validate().is_err() || i.digest().ok().as_ref() != Some(&record.intent_sha256)
+    }) {
+        return Err("files.save.corrupt".into());
+    }
+    if (matches!(
+        record.phase,
+        Phase::Prepared
+            | Phase::Running
+            | Phase::Publishing
+            | Phase::Succeeded
+            | Phase::Conflict
+            | Phase::Failed
+    ) && record.intent.is_none())
+        || (record.phase == Phase::Prepared
+            && (record.lease.is_some() || record.artifact.is_some() || record.published))
+        || (record.phase == Phase::Running && record.lease.is_none())
+        || (matches!(record.phase, Phase::Succeeded | Phase::Conflict) && !record.published)
+        || (matches!(record.phase, Phase::Releasing | Phase::Released) && record.release.is_none())
     {
         return Err("files.save.corrupt".into());
     }

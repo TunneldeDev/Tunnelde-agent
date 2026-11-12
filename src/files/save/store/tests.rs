@@ -176,3 +176,38 @@ fn a_lease_path_replacement_cannot_falsely_prove_original_executor_exited() {
     assert!(!observed.cancellable);
     assert!(super::super::lifecycle::release(&f.state, &control, observed.revision, true).is_err());
 }
+
+#[test]
+fn a_malformed_persisted_intent_is_preserved_and_rejected_before_executor_io() {
+    let f = Fixture::new();
+    let mut store = f.open();
+    let (control, intent) = operation(&store, "target", b"data");
+    store.submit(&control, &intent, b"data").unwrap();
+    let mut record = store.get(&control).unwrap().unwrap();
+    record.intent.as_mut().unwrap().target.clear();
+    let damaged = serde_json::to_string(&record).unwrap();
+    db(store.connection.execute(
+        "UPDATE operations SET body=?2 WHERE id=?1",
+        params![control.operation_id, damaged],
+    ))
+    .unwrap();
+    assert_eq!(
+        store.get(&control).err().unwrap().to_string(),
+        "files.save.corrupt"
+    );
+    drop(store);
+    let before = fs::read(f.state.join(PROFILE.database)).unwrap();
+    assert_eq!(
+        super::super::executor::execute(&f.state, &control)
+            .err()
+            .unwrap()
+            .to_string(),
+        "files.save.corrupt"
+    );
+    assert_eq!(fs::read(f.state.join(PROFILE.database)).unwrap(), before);
+    assert!(fs::read_dir(&f.scope).unwrap().next().is_none());
+    assert!(!f
+        .state
+        .join(format!("save-{}.lease", control.operation_id))
+        .exists());
+}

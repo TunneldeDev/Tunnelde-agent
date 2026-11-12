@@ -50,6 +50,8 @@ start. The worker records exclusive private staging ownership, checks the
 baseline/content/available metadata, and durably enters `publishing` before
 target mutation. Cancellation can win before this admission, never afterwards.
 A five-minute lifetime bounds the worker; termination does not invent a result.
+OS session/job policies may still terminate a worker; recovery then uses its
+original lease and journal rather than promising uninterrupted execution.
 
 Create uses native atomic no-replace publication. Replacement retains the actual
 displaced object using Linux/macOS exchange or Windows backup replacement. No
