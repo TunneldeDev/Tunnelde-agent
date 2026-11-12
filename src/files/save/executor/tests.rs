@@ -210,7 +210,7 @@ fn displaced_external_write_is_preserved_as_a_published_conflict() {
     let observed = lifecycle::observe(&f.storage, control).unwrap().unwrap();
     assert!(observed.phase == Phase::Conflict);
     assert_eq!(observed.publication, "published");
-    assert!(observed.backup_retained);
+    assert_eq!(observed.backup_retained, Some(true));
     assert_eq!(fs::read(f.scope.join("target")).unwrap(), b"new");
     let backup = f
         .storage

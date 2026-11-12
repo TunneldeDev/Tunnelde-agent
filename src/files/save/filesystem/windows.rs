@@ -285,7 +285,9 @@ pub(super) fn initialize_storage(path: &Path) -> io::Result<()> {
     let sid = String::from_utf16(unsafe { std::slice::from_raw_parts(text, len) })
         .map_err(|_| invalid())?;
     drop(allocation);
-    let sddl: Vec<_> = format!("D:P(A;OICI;FA;;;{sid})")
+    // An elevated token's default owner may be Administrators. Set the user
+    // owner explicitly as well as a protected DACL, then verify both below.
+    let sddl: Vec<_> = format!("O:{sid}D:P(A;OICI;FA;;;{sid})")
         .encode_utf16()
         .chain(Some(0))
         .collect();

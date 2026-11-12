@@ -158,6 +158,13 @@ fn native_replace_retains_actual_original_and_release_requires_exact_revision_an
     let f = Fixture::new();
     let target = f.scope.join("existing.json");
     fs::write(&target, "original").unwrap();
+    let old_modified = std::time::UNIX_EPOCH + Duration::from_secs(946684800);
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&target)
+        .unwrap()
+        .set_modified(old_modified)
+        .unwrap();
     #[cfg(windows)]
     fs::write(
         target.with_file_name("existing.json:stream"),
@@ -181,6 +188,10 @@ fn native_replace_retains_actual_original_and_release_requires_exact_revision_an
     assert_eq!(response["observation"]["phase"], "succeeded", "{response}");
     assert_eq!(response["observation"]["backupRetained"], true);
     assert_eq!(fs::read_to_string(&target).unwrap(), "replacement");
+    assert!(
+        fs::metadata(&target).unwrap().modified().unwrap() > old_modified,
+        "saved content needs a new modification time"
+    );
     #[cfg(windows)]
     assert_eq!(
         fs::read_to_string(target.with_file_name("existing.json:stream")).unwrap(),
@@ -219,6 +230,11 @@ fn native_replace_retains_actual_original_and_release_requires_exact_revision_an
     f.reject(&release, "files.save.notReleasable");
     release["revision"] = response["observation"]["revision"].clone();
     assert_eq!(f.call(&release)["observation"]["phase"], "released");
+    assert_eq!(
+        f.call(&release)["observation"]["phase"],
+        "released",
+        "an acknowledged release can be repeated with its original revision without deleting again"
+    );
     assert!(!backup.exists());
     assert_eq!(fs::read_to_string(&target).unwrap(), "replacement");
 }

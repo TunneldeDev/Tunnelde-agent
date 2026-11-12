@@ -7,7 +7,18 @@ pub(super) async fn start(directory: &Path, bytes: &[u8]) -> Result<()> {
     #[cfg(windows)]
     command.creation_flags(0x08000008);
     #[cfg(unix)]
-    command.process_group(0);
+    // SAFETY: this child-only hook calls one async-signal-safe syscall and
+    // creates a fresh session without a controlling terminal. Merely creating
+    // a process group would still inherit the SSH session's terminal lifecycle.
+    unsafe {
+        command.pre_exec(|| {
+            if libc::setsid() < 0 {
+                Err(std::io::Error::last_os_error())
+            } else {
+                Ok(())
+            }
+        });
+    }
     let mut child = command
         .arg("files-save")
         .arg("--directory")

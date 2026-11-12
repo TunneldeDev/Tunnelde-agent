@@ -3,7 +3,7 @@
 use super::{
     contracts::{Control, Observation, Phase},
     filesystem, lease,
-    store::{Record, Store},
+    store::{Record, ReleaseIntent, Store},
 };
 use crate::Result;
 use std::path::Path;
@@ -70,7 +70,13 @@ pub(super) fn observe(directory: &Path, control: &Control) -> Result<Option<Obse
         } else {
             "none"
         },
-        backup_retained: record.backup_retained,
+        backup_retained: if matches!(record.phase, Phase::Unknown | Phase::Releasing)
+            || unknown_lease
+        {
+            None
+        } else {
+            Some(record.backup_retained)
+        },
         error: record.error,
     }))
 }
@@ -86,7 +92,11 @@ pub(super) fn release(
     if storage.identity != store.authority.storage_root {
         return Err("files.save.storageChanged".into());
     }
-    if record.phase == Phase::Released && record.revision == revision {
+    let intent = ReleaseIntent {
+        revision,
+        discard_backup,
+    };
+    if record.phase == Phase::Released && record.release.as_ref() == Some(&intent) {
         return Ok(());
     }
     if record.revision != revision
@@ -110,6 +120,7 @@ pub(super) fn release(
     // artifact. Persist that authorization before even a single unlink.
     store.change(control, |r| {
         r.phase = Phase::Releasing;
+        r.release = Some(intent);
         Ok(())
     })?;
     drop(store);

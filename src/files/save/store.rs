@@ -21,7 +21,7 @@ const PROFILE: Profile = Profile {
     application_id: 0x54465331,
     version: 1,
     maximum: 32 * 1024 * 1024,
-    journal_overhead: 65536,
+    journal_overhead: 262144,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -38,6 +38,7 @@ pub(super) struct Record {
     pub lease: Option<ObjectIdentity>,
     pub backup_retained: bool,
     pub published: bool,
+    pub release: Option<ReleaseIntent>,
     pub error: Option<String>,
 }
 impl Record {
@@ -60,9 +61,16 @@ impl Record {
             lease: None,
             backup_retained: false,
             published: false,
+            release: None,
             error: None,
         }
     }
+}
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct ReleaseIntent {
+    pub revision: u64,
+    pub discard_backup: bool,
 }
 pub(super) struct Store {
     connection: Connection,

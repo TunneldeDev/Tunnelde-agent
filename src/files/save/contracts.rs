@@ -297,7 +297,7 @@ pub(super) struct Observation {
     pub live: Option<bool>,
     pub cancellable: bool,
     pub publication: &'static str,
-    pub backup_retained: bool,
+    pub backup_retained: Option<bool>,
     pub error: Option<String>,
 }
 #[derive(Serialize)]

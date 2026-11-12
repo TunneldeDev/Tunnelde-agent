@@ -117,10 +117,33 @@ pub(super) fn initialize_storage(path: &Path) -> io::Result<()> {
     validate_storage(path)
 }
 pub(super) fn validate_storage(path: &Path) -> io::Result<()> {
-    let md = directory(path)?.metadata()?;
+    let directory = directory(path)?;
+    let md = directory.metadata()?;
     // SAFETY: geteuid has no inputs or memory arguments.
     if md.uid() != unsafe { libc::geteuid() } || md.mode() & 0o077 != 0 {
         return Err(invalid());
+    }
+    let mut stat = std::mem::MaybeUninit::<libc::statfs>::uninit();
+    // SAFETY: retained directory descriptor and writable statfs output.
+    if unsafe { libc::fstatfs(directory.as_raw_fd(), stat.as_mut_ptr()) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    let stat = unsafe { stat.assume_init() };
+    #[cfg(target_os = "linux")]
+    // A declaration of local storage does not authorize SQLite journals on
+    // NFS/SMB/FUSE or another filesystem whose publication rules are unknown.
+    if !matches!(
+        stat.f_type as u64,
+        0xef53 | 0x58465342 | 0x9123683e | 0x01021994 | 0x794c7630
+    ) {
+        return Err(invalid());
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let name = unsafe { std::ffi::CStr::from_ptr(stat.f_fstypename.as_ptr()) };
+        if stat.f_flags & libc::MNT_LOCAL == 0 || !matches!(name.to_bytes(), b"apfs" | b"hfs") {
+            return Err(invalid());
+        }
     }
     Ok(())
 }

@@ -75,6 +75,10 @@ paths do not prove success. Unknown operations quarantine new admission in that
 authority. These are process-loss semantics, not universal power-loss, network
 storage, cross-mount move or legacy SFTP recovery guarantees.
 
+`backupRetained: null` denotes uncertain artifact availability during unknown
+publication/cleanup. An exact duplicate release uses its original revision and
+discard decision and returns the settled receipt without deleting again.
+
 Explicit release removes only the verified owned artifact, never a user target
 or directory recursively. Release intent precedes deletion; interrupted cleanup
 becomes unknown. Unknown saves cannot release. `cleanupAuthorized: false`
