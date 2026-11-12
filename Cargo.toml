@@ -18,9 +18,10 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls", "j
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+xattr = "1.7"
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_Security", "Win32_Security_Authorization", "Win32_System_Threading"] }
 
 [profile.release]
 codegen-units = 1

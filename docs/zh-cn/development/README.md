@@ -7,3 +7,4 @@
 - [持久任务启动登记](runner-admission.md)
 - [任务残留元数据观察](runner-artifacts.md)
 - [文件准入账本](file-admission.md)
+- [原生文件保存（尚待验收）](file-save.md)
