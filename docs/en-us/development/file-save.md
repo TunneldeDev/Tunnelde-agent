@@ -91,5 +91,9 @@ database. No receipt, tombstone or unknown is evicted to admit new work. Known
 terminal payloads may be reclaimed while operation identity remains. Corrupt,
 foreign or unsafe storage is preserved and rejected.
 
+Extended metadata is bounded separately (256 attributes, 64 KiB per value,
+1 MiB combined). Oversized macOS resource forks and content-specific compressed
+metadata are rejected before publication rather than copied without limits.
+
 Capability advertisement still requires filesystem/metadata acceptance, old-client
 combinations, physical macOS/Linux, desktop consent/recovery and package delivery.
