@@ -13,6 +13,7 @@ serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-util", "io-std", "fs", "process", "sync", "time"] }
 uuid = { version = "1", features = ["v4"] }
 sha2 = "0.10"
+rusqlite = { version = "0.41.1", features = ["bundled"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "stream"] }
 
 [target.'cfg(unix)'.dependencies]

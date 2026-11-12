@@ -6,3 +6,4 @@
 - [运行器初始化配置](runner-initialization.md)
 - [持久任务启动登记](runner-admission.md)
 - [任务残留元数据观察](runner-artifacts.md)
+- [文件准入账本](file-admission.md)

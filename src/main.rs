@@ -1,3 +1,4 @@
+mod files;
 mod protocol;
 mod runner;
 
@@ -19,6 +20,7 @@ async fn run() -> Result<()> {
     match arguments.first().map(String::as_str) {
         Some("--capabilities") => protocol::capabilities::write(&arguments),
         Some("--mcp-stdio") => mcp_bridge().await,
+        Some("files-admission") => files::admission::run(&arguments).await,
         Some("--version") => {
             println!("{}", env!("CARGO_PKG_VERSION"));
             Ok(())
@@ -28,7 +30,7 @@ async fn run() -> Result<()> {
             | "stop-fenced" | "status-fenced" | "inspect-artifacts",
         ) => runner::run(&arguments).await,
         _ => Err(
-            "Expected --capabilities, --mcp-stdio, --version, start, send, poll, stop or status"
+            "Expected --capabilities, --mcp-stdio, --version, files-admission, start, send, poll, stop or status"
                 .into(),
         ),
     }

@@ -29,6 +29,10 @@ New source also declares `runner.artifact-observation.v1` for bounded
 [task artifact metadata observation](runner-artifacts.md); published 0.27.0
 predates admission fencing and artifact observation. Require discovery, not the version.
 
+`files.admission-ledger.v1` separately declares the experimental
+[file admission ledger](file-admission.md). It grants no execution, publication
+receipt, cleanup authority or recovery of independent SFTP requests.
+
 Consumers must bound combined stdout/stderr to 4096 bytes and time out discovery.
 Require the helper identity and supported schema before interpreting features.
 Version 1 requires all five fields with the types above. Strings are printable, non-whitespace
