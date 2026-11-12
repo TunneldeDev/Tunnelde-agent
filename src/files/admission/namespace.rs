@@ -130,6 +130,16 @@ impl Namespace {
             .open(path)
             .map_err(|_| "files.admission.storageUnavailable")?;
         same(&directory, path, true)?;
+        // SQLite NOFOLLOW rejects symlinks in *any* path component, including
+        // macOS's system /var alias. Resolve ancestors after opening/checking
+        // the actual leaf, then prove this canonical name is the retained root.
+        // A symlink at the selected root itself remains rejected above.
+        #[cfg(unix)]
+        let canonical =
+            std::fs::canonicalize(path).map_err(|_| "files.admission.storageUnavailable")?;
+        #[cfg(unix)]
+        let path = canonical.as_path();
+        same(&directory, path, true)?;
         let lock_path = path.join(LOCK);
         let mut opts = options(false);
         opts.create(initialize);

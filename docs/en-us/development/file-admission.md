@@ -91,8 +91,11 @@ Use trusted, private **local filesystems** on Windows/Linux/macOS with working
 file locks and SQLite durability semantics. Unix objects must belong to the
 effective user, without group/other permissions. Windows callers must provision
 private account ACLs. Symlink/reparse control objects and multiply linked
-control/database files are rejected. Keep directory/lock/database/journal
-together; never rename, copy, truncate or delete them while delayed commands can
+control/database files are rejected.
+Unix system ancestor aliases are canonicalized only after retaining and checking
+the selected root's identity; a symlink at that root remains rejected.
+Keep directory/lock/database/journal together; never rename, copy, truncate or
+delete them while delayed commands can
 exist. Network/shared/synchronized storage, untrusted writers to this control
 namespace, dishonest hardware and power-loss guarantees beyond the
 SQLite/OS/filesystem contract are unsupported.

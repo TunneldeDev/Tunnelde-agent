@@ -26,6 +26,9 @@ impl Fixture {
         Self(root)
     }
     fn command(&self) -> Command {
+        self.command_at(&self.0)
+    }
+    fn command_at(&self, directory: &std::path::Path) -> Command {
         let mut command = Command::new(env!("CARGO_BIN_EXE_tunnelde-agent"));
         #[cfg(windows)]
         {
@@ -34,7 +37,7 @@ impl Fixture {
         }
         command
             .args(["files-admission", "--directory"])
-            .arg(&self.0)
+            .arg(directory)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
@@ -367,6 +370,47 @@ fn nonprivate_directory_and_symlinked_control_names_are_rejected() {
     assert!(!output.status.success());
     assert!(output.stdout.is_empty());
     assert_eq!(fs::read(original).unwrap(), before);
+}
+
+#[cfg(unix)]
+#[test]
+fn system_ancestor_aliases_resolve_to_the_retained_root_without_allowing_a_linked_root() {
+    use std::os::unix::fs::{symlink, DirBuilderExt};
+    let fixture = Fixture::new();
+    let state = fixture.0.join("state");
+    fs::DirBuilder::new().mode(0o700).create(&state).unwrap();
+    let alias = fixture.0.join("system-alias");
+    symlink(&fixture.0, &alias).unwrap();
+    let mut child = fixture.command_at(&alias.join("state")).spawn().unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(br#"{"method":"initialize","schemaVersion":1,"storage":"local"}"#)
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(state.join(DATABASE).exists());
+    let leaf = fixture.0.join("linked-root");
+    symlink(&state, &leaf).unwrap();
+    let mut child = fixture.command_at(&leaf).spawn().unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(br#"{"method":"initialize","schemaVersion":1,"storage":"local"}"#)
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(!output.status.success());
+    assert!(output.stdout.is_empty());
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "Tunnelde helper: files.admission.unsafeStorage\n"
+    );
 }
 
 #[test]
