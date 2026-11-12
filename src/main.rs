@@ -21,6 +21,7 @@ async fn run() -> Result<()> {
         Some("--capabilities") => protocol::capabilities::write(&arguments),
         Some("--mcp-stdio") => mcp_bridge().await,
         Some("files-admission") => files::admission::run(&arguments).await,
+        Some("files-save") => files::save::run(&arguments).await,
         Some("--version") => {
             println!("{}", env!("CARGO_PKG_VERSION"));
             Ok(())
