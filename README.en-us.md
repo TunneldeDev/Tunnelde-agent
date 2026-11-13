@@ -16,6 +16,15 @@ Download the matching OS/architecture binary and `SHA256SUMS` from this reposito
 selecting it in Tunnelde. On POSIX, grant executable permission with `chmod +x <binary>`.
 For a remote supervisor, choose the remote machine's OS/architecture.
 
+Version 0.28.0 packages durable runner admission, read-only artifact observation,
+and experimental file admission/native-save implementations. Negotiate features
+with [capability discovery](docs/en-us/development/capabilities.md), not version
+comparisons. [Native saves](docs/en-us/development/file-save.md) remain absent
+from discovery and are not enabled in the desktop editor: installation consent,
+initialization and complete desktop recovery acceptance are still pending.
+This release does not install itself, upgrade running tasks or change existing
+SFTP transfers.
+
 This repository preserves the native helper's history from the desktop repository, through
 desktop dev `1b95417252173e731c60b3d64c1327124d09dad7`. The imported source tree is
 `a12394357c54329e77e5659181939bfbdee03de3`. Its inherited baseline version is **0.26.1**;

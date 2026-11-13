@@ -9,9 +9,9 @@
 {
   "schemaVersion": 1,
   "helper": "tunnelde-agent",
-  "helperVersion": "0.27.0",
+  "helperVersion": "0.28.0",
   "runnerProtocols": [1],
-  "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1"]
+  "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1", "runner.artifact-observation.v1", "files.admission-ledger.v1"]
 }
 ```
 
@@ -23,12 +23,15 @@
 
 `runner.admission-fence.v1` 独立声明支持[持久任务启动登记](runner-admission.md)。
 
-新增源码还声明 `runner.artifact-observation.v1`，提供有界的
+0.28.0 还声明 `runner.artifact-observation.v1`，提供有界的
 [任务残留元数据观察](runner-artifacts.md)。已发布的 0.27.0 不包含启动登记保护
 和残留观察，必须查询能力，不能按版本推断。
 
 `files.admission-ledger.v1` 独立声明实验性[文件准入账本](file-admission.md)，
 不授予执行、发布回执、清理权限，也不能恢复独立 SFTP 请求。
+
+安装包包含的实验性 `files-save` 实现仍未公布为能力，不表示桌面保存已可用或文件 API
+已经稳定；见[原生保存的授权、恢复及验收边界](file-save.md)。
 
 调用方必须将 stdout/stderr 合计限制为 4096 字节，并为查询设置超时。
 确认辅助程序身份和信封版本后才能解释能力。版本 1 必须包含上述五个字段及其类型。

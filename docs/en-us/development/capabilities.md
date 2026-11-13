@@ -10,9 +10,9 @@ task parsing; diagnostic output does not echo those arguments.
 {
   "schemaVersion": 1,
   "helper": "tunnelde-agent",
-  "helperVersion": "0.27.0",
+  "helperVersion": "0.28.0",
   "runnerProtocols": [1],
-  "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1"]
+  "features": ["runner.control.v1", "runner.initialize-config.v1", "runner.admission-fence.v1", "runner.artifact-observation.v1", "files.admission-ledger.v1"]
 }
 ```
 
@@ -25,13 +25,17 @@ or artifact cleanup. `runner.initialize-config.v1` separately declares
 
 `runner.admission-fence.v1` separately declares [durable task admission](runner-admission.md).
 
-New source also declares `runner.artifact-observation.v1` for bounded
+Version 0.28.0 also declares `runner.artifact-observation.v1` for bounded
 [task artifact metadata observation](runner-artifacts.md); published 0.27.0
 predates admission fencing and artifact observation. Require discovery, not the version.
 
 `files.admission-ledger.v1` separately declares the experimental
 [file admission ledger](file-admission.md). It grants no execution, publication
 receipt, cleanup authority or recovery of independent SFTP requests.
+
+The packaged experimental `files-save` implementation remains unadvertised.
+Its presence does not declare desktop save readiness or a stable file API;
+see [native-save consent, recovery and acceptance limits](file-save.md).
 
 Consumers must bound combined stdout/stderr to 4096 bytes and time out discovery.
 Require the helper identity and supported schema before interpreting features.

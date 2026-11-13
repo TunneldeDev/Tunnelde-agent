@@ -1404,7 +1404,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tunnelde-agent"
-version = "0.27.0"
+version = "0.28.0"
 dependencies = [
  "libc",
  "reqwest",
