@@ -1,8 +1,11 @@
 # Native file saves (experimental, acceptance pending)
 
-`files.save.v1` is under review, absent from capability discovery, and has no
-desktop adapter. It is not a stable plugin API and cannot settle legacy SFTP
-unknowns. The separate admission ledger remains admission-only.
+Version 0.28.0 includes the experimental `files.save.v1` implementation, still
+under review and absent from capability discovery. Desktop source has protocol
+and query-only recovery adapters, but new editor saves and installation/setup
+remain disabled pending their consent and acceptance work. This is not a stable
+plugin API and cannot settle legacy SFTP unknowns. The separate admission ledger
+remains admission-only.
 
 ## Consent and identity
 
