@@ -71,17 +71,15 @@ impl Directory {
 }
 
 pub(super) fn redirected(value: &std::fs::Metadata) -> bool {
-    if value.file_type().is_symlink() {
-        return true;
-    }
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt;
-        if value.file_attributes() & 0x400 != 0 {
-            return true;
-        }
+        value.file_type().is_symlink() || value.file_attributes() & 0x400 != 0
     }
-    false
+    #[cfg(not(windows))]
+    {
+        value.file_type().is_symlink()
+    }
 }
 
 #[cfg(test)]
