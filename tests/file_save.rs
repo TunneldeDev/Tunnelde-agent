@@ -1,4 +1,8 @@
 //! Native binary tests; fixtures and user targets are isolated from each other.
+#[cfg(windows)]
+#[path = "file_save/windows_job.rs"]
+mod windows_job;
+
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
@@ -51,6 +55,8 @@ impl Fixture {
     }
     fn bytes(&self, bytes: &[u8]) -> Output {
         let mut child = self.command().spawn().unwrap();
+        #[cfg(windows)]
+        let _job = windows_job::permitted_request_job(&child);
         child.stdin.take().unwrap().write_all(bytes).unwrap();
         child.wait_with_output().unwrap()
     }
@@ -337,6 +343,8 @@ fn lost_stdout_does_not_stop_detached_execution_or_erase_its_receipt() {
     let f = Fixture::new();
     let submit = f.submit("detached.txt", "survives client", json!({"kind":"absent"}));
     let mut child = f.command().spawn().unwrap();
+    #[cfg(windows)]
+    let _job = windows_job::permitted_request_job(&child);
     drop(child.stdout.take());
     child
         .stdin

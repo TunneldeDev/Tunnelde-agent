@@ -53,6 +53,10 @@ start. The worker records exclusive private staging ownership, checks the
 baseline/content/available metadata, and durably enters `publishing` before
 target mutation. Cancellation can win before this admission, never afterwards.
 A five-minute lifetime bounds the worker; termination does not invent a result.
+On Windows the worker requests permitted job breakaway as well as console
+detachment, so an OpenSSH request ending does not terminate its admitted work.
+A policy that refuses breakaway causes an explicit launch error; the admitted
+record remains queryable, without a session-bound fallback or implicit retry.
 OS session/job policies may still terminate a worker; recovery then uses its
 original lease and journal rather than promising uninterrupted execution.
 
