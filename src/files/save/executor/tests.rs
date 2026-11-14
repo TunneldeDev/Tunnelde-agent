@@ -12,6 +12,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(target_os = "macos")]
+mod macos;
+
 struct Fixture {
     root: PathBuf,
     storage: PathBuf,
@@ -110,6 +113,10 @@ fn kill_original_executor_at_publication_checkpoints() {
         ] {
             let f = Fixture::new();
             let packet = f.prepare(replace);
+            #[cfg(target_os = "macos")]
+            if replace {
+                macos::age_original(&f);
+            }
             let request: Request = serde_json::from_value(packet.clone()).unwrap();
             let control = request.control().unwrap();
             let signal = f.root.join("checkpoint");
@@ -189,6 +196,12 @@ fn kill_original_executor_at_publication_checkpoints() {
                 Checkpoint::Publishing | Checkpoint::NativePublished | Checkpoint::Published
             ) {
                 assert!(lifecycle::release(&f.storage, control, observed.revision, true).is_err());
+            } else {
+                lifecycle::release(&f.storage, control, observed.revision, false).unwrap();
+                assert!(!f
+                    .storage
+                    .join(filesystem::stage_name(&control.operation_id))
+                    .exists());
             }
         }
     }

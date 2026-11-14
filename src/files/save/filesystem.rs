@@ -182,8 +182,8 @@ pub(super) fn write_stage(file: &mut File, bytes: &[u8], original: Option<&File>
     if let Some(original) = original {
         platform::metadata(original, file).map_err(|_| "files.save.metadataUnsupported")?;
     }
-    // Metadata cloning (notably macOS COPYFILE_STAT) must not restore the old
-    // modification time over newly edited content.
+    // Newly edited content must have a fresh modification time, independently
+    // of the platform's metadata-copy implementation.
     file.set_modified(std::time::SystemTime::now())
         .map_err(|_| "files.save.metadataUnsupported")?;
     file.sync_all().map_err(|_| "files.save.stageUnavailable")?;

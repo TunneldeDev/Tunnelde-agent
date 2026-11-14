@@ -13,6 +13,8 @@ use std::{
 };
 #[cfg(target_os = "macos")]
 mod attributes;
+#[cfg(target_os = "macos")]
+mod metadata;
 
 fn invalid() -> io::Error {
     io::Error::other("Unsupported or changed file namespace")
@@ -207,30 +209,7 @@ pub(super) fn metadata(source: &File, target: &File) -> io::Result<()> {
     }
     #[cfg(target_os = "macos")]
     {
-        let attributes = attributes::Attributes::read(source)?;
-        let mut stat = std::mem::MaybeUninit::<libc::stat>::uninit();
-        if unsafe { libc::fstat(source.as_raw_fd(), stat.as_mut_ptr()) } != 0 {
-            return Err(io::Error::last_os_error());
-        }
-        // Compressed-file metadata encodes the old contents. It cannot be
-        // copied onto a different payload as ordinary editor metadata.
-        if unsafe { stat.assume_init() }.st_flags & libc::UF_COMPRESSED != 0 {
-            return Err(invalid());
-        }
-        // COPYFILE_ACL | COPYFILE_STAT only; bounded xattrs are handled below.
-        // SAFETY: retained descriptors and null optional copy state.
-        if unsafe {
-            libc::fcopyfile(
-                source.as_raw_fd(),
-                target.as_raw_fd(),
-                std::ptr::null_mut(),
-                3,
-            )
-        } != 0
-        {
-            return Err(io::Error::last_os_error());
-        }
-        attributes.apply(target)?;
+        metadata::copy(source, target, &original)?;
     }
     #[cfg(target_os = "linux")]
     {

@@ -102,5 +102,14 @@ Extended metadata is bounded separately (256 attributes, 64 KiB per value,
 1 MiB combined). Oversized macOS resource forks and content-specific compressed
 metadata are rejected before publication rather than copied without limits.
 
+On macOS, the stage retains the device/inode/birthtime identity recorded before
+writing, including interruption during metadata copying. Replacement copies
+owner/group, mode, ACLs, bounded xattrs and the `nodump`, `hidden` and `tracked`
+flags explicitly; it does not restore the source timestamps with `COPYFILE_STAT`.
+Other file flags are rejected before publication because they may encode old
+contents, require privileges or prevent publication and revision-bound cleanup.
+Existing recovery identities are never rewritten, and changed artifacts remain
+ineligible for cleanup.
+
 Capability advertisement still requires filesystem/metadata acceptance, old-client
 combinations, physical macOS/Linux, desktop consent/recovery and package delivery.
