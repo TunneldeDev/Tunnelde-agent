@@ -5,7 +5,15 @@ use tokio::io::AsyncWriteExt;
 pub(super) async fn start(directory: &Path, bytes: &[u8]) -> Result<()> {
     let mut command = tokio::process::Command::new(std::env::current_exe()?);
     #[cfg(windows)]
-    command.creation_flags(0x08000008);
+    {
+        use windows_sys::Win32::System::Threading::{
+            CREATE_BREAKAWAY_FROM_JOB, CREATE_NO_WINDOW, DETACHED_PROCESS,
+        };
+        // OpenSSH closes its request job after replying. Console detachment
+        // alone leaves the worker in that job; request permitted breakaway.
+        // If server policy refuses, preserve admission and fail the launch.
+        command.creation_flags(CREATE_BREAKAWAY_FROM_JOB | CREATE_NO_WINDOW | DETACHED_PROCESS);
+    }
     #[cfg(unix)]
     // SAFETY: this child-only hook calls one async-signal-safe syscall and
     // creates a fresh session without a controlling terminal. Merely creating
